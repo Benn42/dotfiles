@@ -23,9 +23,19 @@ unsetopt autocd beep notify
 
 # Aliases
 alias ls="ls --color=auto"
-alias ll='exa --long --all --group-directories-first'
-alias wl='wl-copy'
-alias vim='nvim'
+
+if [ -x "$(which exa)" ]; then
+    alias ll='exa --long --all --group-directories-first'
+fi
+
+if [-x "$(which nvim)"]; then
+    alias vim='nvim'
+fi
+
+# check bat command exists $(which bat)
+if [ -x "$(which bat)" ]; then
+  alias cat="bat "
+fi
 
 alias grep='grep --color=auto'
 alias fgrep='fgrep --color=auto'
