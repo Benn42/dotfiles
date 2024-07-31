@@ -28,7 +28,7 @@ if [ -x "$(which exa)" ]; then
     alias ll='exa --long --all --group-directories-first'
 fi
 
-if [-x "$(which nvim)"]; then
+if [ -x "$(which nvim)" ]; then
     alias vim='nvim'
 fi
 
