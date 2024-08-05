@@ -21,6 +21,9 @@ zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
 
 unsetopt autocd beep notify
 
+bindkey '\e ' autosuggest-accept
+bindkey -v
+
 # Aliases
 alias ls="ls --color=auto"
 
