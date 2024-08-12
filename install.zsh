@@ -13,21 +13,52 @@ clone_repo() {
     fi
 }
 
-if [[ $1 && $2 && $3 ]]; then
-    regex="^[a-z0-9!#\$%&'*+/=?^_\`{|}~-]+(\.[a-z0-9!#$%&'*+/=?^_\`{|}~-]+)*@([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z0-9]([a-z0-9-]*[a-z0-9])?\$"
-    if [[ $1 =~ $regex ]]; then
-        echo $1
-    else
-        echo "Invalid email address passed"
-        exit 1
+usage() {
+    echo "Usage: $0 [-e your.name@example.com -n \"Your name\" -p path/to/.ssh/your.pub [-c youreditor]]"
+}
+
+while getopts ":e:n:p:c:h" o; do
+    case "${o}" in
+        e)
+            email=${OPTARG}
+            regex="^[a-z0-9!#\$%&'*+/=?^_\`{|}~-]+(\.[a-z0-9!#$%&'*+/=?^_\`{|}~-]+)*@([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z0-9]([a-z0-9-]*[a-z0-9])?\$"
+            if ! [[ $email =~ $regex ]]; then
+                echo "Invalid email address passed"
+                exit 1
+            fi
+            ;;
+        n)
+            name=${OPTARG}
+            ;;
+        p)
+            path=${OPTARG}
+            ;;
+        c)
+            editor=${OPTARG}
+            ;;
+        h)
+            usage
+            exit 0
+            ;;
+        *)
+            usage
+            exit 1
+            ;;
+    esac
+done
+
+if [[ $email && $name && $path ]]; then
+    if ! [ $editor ]; then
+        editor="nvim -f"
     fi
-    
+
     read -r -d '' GITCONF << EOM
 [init]
 	defaultBranch = main
 [user]
-	name = $2
-	email = $1
+	name = $name
+	email = $email
+	signingkey = $path
 [alias]
 	st = status -s
 	sta = status
@@ -44,10 +75,14 @@ if [[ $1 && $2 && $3 ]]; then
 [push]
 	autoSetupRemote = true
 [core]
-	editor = nvim -f
+	editor = $editor
+[gpg]
+	format = ssh
+[commit]
+	gpgsign = true
 EOM
+
     echo "$GITCONF" > $HOME/.gitconfig
-    exit 1
 fi
 
 # Ensure config directory exists
