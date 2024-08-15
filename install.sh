@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/bin/bash
 
 # Function to clone a repository if it does not already exist
 clone_repo() {
@@ -118,6 +118,7 @@ fi
 # Source the .zshrc file
 if [ -f "$HOME/.zshrc" ]; then
     echo "Sourcing $HOME/.zshrc..."
+    exec /bin/zsh
     source $HOME/.zshrc
 else
     echo "$HOME/.zshrc file not found. Unable to source."
