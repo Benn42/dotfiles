@@ -14,11 +14,33 @@ clone_repo() {
 }
 
 usage() {
-    echo "Usage: $0 [-e your.name@example.com -n \"Your name\" -p path/to/.ssh/your.pub [-c youreditor]]"
+    cat << EOL
+Usage: $0 [-g -e your.name@example.com -n \"Your name\" -p path/to/.ssh/your.pub [-c youreditor]] [-t] [-s] [-z]
+-g Flags to configure .gitconfig
+    -e Github Email global config
+    -n Github Name global config
+    -p Github ssh key path global config
+    -c Github editor global config
+-t Flags to configure tmux
+-s Flags to configure starship
+-z Flags to configure zsh
+EOL
 }
 
-while getopts ":e:n:p:c:h" o; do
+while getopts ":gtsze:n:p:c:h" o; do
     case "${o}" in
+        g)
+            git=true
+            ;;
+        t)
+            tmux=true
+            ;;
+        s)
+            starship=true
+            ;;
+        z)
+            zsh=true
+            ;;
         e)
             email=${OPTARG}
             regex="^[a-z0-9!#\$%&'*+/=?^_\`{|}~-]+(\.[a-z0-9!#$%&'*+/=?^_\`{|}~-]+)*@([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z0-9]([a-z0-9-]*[a-z0-9])?\$"
@@ -47,12 +69,16 @@ while getopts ":e:n:p:c:h" o; do
     esac
 done
 
-if [[ $email && $name && $path ]]; then
-    if ! [ $editor ]; then
-        editor="nvim -f"
-    fi
+if [ $git ]; then
+    if ! [[ $email && $name && $path ]]; then
+        usage
+    else
+        echo "Installing .gitconfig..."
+        if ! [ $editor ]; then
+            editor="nvim -f"
+        fi
 
-    read -r -d '' GITCONF << EOM
+        read -r -d '' GITCONF << EOM
 [init]
 	defaultBranch = main
 [user]
@@ -82,46 +108,80 @@ if [[ $email && $name && $path ]]; then
 	gpgsign = true
 EOM
 
-    echo "$GITCONF" > $HOME/.gitconfig
+        echo "$GITCONF" > $HOME/.gitconfig
+    fi
 fi
 
 # Ensure config directory exists
 mkdir -p $HOME/.config
 
-# Backup existing .zshrc
-if [ -f "$HOME/.zshrc" ]; then
-    echo "Backing up $HOME/.zshrc"
-    mv $HOME/.zshrc $HOME/.zshrc.bak
-fi
+if [ $tmux ] && [ -x "$(which tmux)" ]; then
+    clone_repo "https://github.com/tmux-plugins/tpm" "$HOME/.tmux/plugins/tpm"
 
-# Copy the .zshrc file
-if [ -f "./.zshrc" ]; then
-    echo "Copying .zshrc to home directory..."
-    cp ./.zshrc $HOME/.zshrc
+    cp ./tmux.conf $HOME/.config/tmux/tmux.conf
 
-    # Clone the Zsh plugins
-    clone_repo "https://github.com/zsh-users/zsh-autosuggestions" "$HOME/.config/zsh/plugins/zsh-autosuggestions/"
-    clone_repo "https://github.com/marlonrichert/zsh-autocomplete.git" "$HOME/.config/zsh/plugins/zsh-autocomplete/"
-    clone_repo "https://github.com/zdharma-continuum/fast-syntax-highlighting" "$HOME/.config/zsh/plugins/fast-syntax-highlighting/"
-else
-    echo ".zshrc file not found in the current directory. Skipping copy."
+    if [ $TERM_PROGRAM != "tmux" ]; then
+        echo 'Starting tmux...'
+        tmux
+    else
+        echo 'Sourcing tmux config...'
+        tmux source $HOME/.config/tmux/tmux.conf
+    fi
 fi
 
 # Copy the starship.toml file
-if [ -f "./starship.toml" ]; then
-    echo "Copying starship.toml to $HOME/.config..."
-    cp ./starship.toml $HOME/.config/starship.toml
-else
-    echo "starship.toml file not found in the current directory. Skipping copy."
+if [ $starship ]; then
+    if [ -f "./starship.toml" ]; then
+        echo "Copying starship.toml to $HOME/.config..."
+        cp ./starship.toml $HOME/.config/starship.toml
+    else
+        echo "starship.toml file not found in the current directory. Skipping copy."
+    fi
 fi
 
-# Source the .zshrc file
-if [ -f "$HOME/.zshrc" ]; then
-    echo "Sourcing $HOME/.zshrc..."
-    exec /bin/zsh
-    source $HOME/.zshrc
-else
-    echo "$HOME/.zshrc file not found. Unable to source."
+if [ $zsh ]; then
+    echo "Installing zsh config..."
+
+    # Backup existing .zshrc
+    if [ -f "$HOME/.zshrc" ]; then
+        echo "Backing up $HOME/.zshrc"
+        mv $HOME/.zshrc $HOME/.zshrc.bak
+    fi
+
+    # Backup existing .zprofile
+    if [ -f "$HOME/.zprofile" ]; then
+        echo "Backing up $HOME/.zprofile"
+        mv $HOME/.zprofile $HOME/.zprofile.bak
+    fi
+
+    # Copy the .zshrc file
+    if [ -f "./.zshrc" ]; then
+        echo "Copying .zshrc to home directory..."
+        cp ./.zshrc $HOME/.zshrc
+
+        # Clone the Zsh plugins
+        clone_repo "https://github.com/zsh-users/zsh-autosuggestions" "$HOME/.config/zsh/plugins/zsh-autosuggestions/"
+        clone_repo "https://github.com/marlonrichert/zsh-autocomplete.git" "$HOME/.config/zsh/plugins/zsh-autocomplete/"
+        clone_repo "https://github.com/zdharma-continuum/fast-syntax-highlighting" "$HOME/.config/zsh/plugins/fast-syntax-highlighting/"
+    else
+        echo ".zshrc file not found in the current directory. Skipping copy."
+    fi
+
+    if [ -f "./.zprofile"]; then
+        cp ./.zprofile $HOME/.zprofile
+    else 
+        echo ".zprofile file not found in the current directory. Skipping copy."
+    fi
+
+
+    # Source the .zshrc file
+    if [ -f "$HOME/.zshrc" ]; then
+        echo "Sourcing $HOME/.zshrc..."
+        exec /bin/zsh
+        source $HOME/.zshrc
+    else
+        echo "$HOME/.zshrc file not found. Unable to source."
+    fi
 fi
 
 echo "Script execution completed."
