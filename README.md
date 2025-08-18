@@ -7,7 +7,7 @@ Easy managed setup of my dotfiles and configuration for Linux and WSL
 Install these packages first to give the full experience with the install tool
 
 ```bash
-sudo apt-get install git-all exa bat zsh
+sudo apt-get install git-all exa bat zsh zoxide
 ```
 
 ```bash
