@@ -24,6 +24,11 @@ unsetopt autocd beep notify
 bindkey '\e ' autosuggest-accept
 bindkey -v
 
+# set up edit command line
+autoload edit-command-line
+zle -N edit-command-line
+bindkey '\e^' edit-command-line
+
 # Aliases
 alias ls="ls --color=auto"
 
@@ -56,5 +61,10 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"      # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"      # This loads nvm bash_completion
 
-eval "$(zoxide init zsh)"
+eval "$(zoxide init --cmd cd zsh)"
 eval "$(starship init zsh)"
+
+# Source machine-specific local configuration
+if [ -f ~/.zshrc-local ]; then
+    source ~/.zshrc-local
+fi

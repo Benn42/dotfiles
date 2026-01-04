@@ -14,10 +14,19 @@ sudo apt-get install git-all exa bat zsh zoxide
 curl -sS https://starship.rs/install.sh | sh
 ```
 
-## Install script usage
+## Setup script usage
 
-The install script can be used to conditionally configure different tools
+The setup script creates symlinks to configuration files for easy updates and can be used to conditionally configure different tools
 
 ```bash
-./install.sh -zstg -n "Your Name" -e "your.name@example.com" -c "code"
+./setup.sh -zstg -n "Your Name" -e "your.name@example.com" -c "code"
 ```
+
+### Benefits of the symlink approach:
+- Changes made in the repository are immediately available after sourcing
+- Single source of truth for configuration files
+- `.zshrc-local` file allows machine-specific configurations that won't be shared
+
+## Legacy install script
+
+The original install script (`install.sh`) is still available if you prefer file copying over symlinks.
