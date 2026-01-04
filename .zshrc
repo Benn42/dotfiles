@@ -49,6 +49,12 @@ alias grep='grep --color=auto'
 alias fgrep='fgrep --color=auto'
 alias egrep='egrep --color=auto'
 
+#easyopen generic
+alias eo='easyopen'
+alias yts='easyopen yts'
+alias yt='easyopen yt'
+alias google='easyopen google'
+
 # auto suggestions
 source ~/.config/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
 set ZSH_AUTOSUGGEST_USE_ASYNC=true
