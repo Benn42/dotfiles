@@ -19,13 +19,21 @@ curl -sS https://starship.rs/install.sh | sh
 The setup script creates symlinks to configuration files for easy updates and can be used to conditionally configure different tools
 
 ```bash
-./setup.sh -zstg -n "Your Name" -e "your.name@example.com" -c "code"
+./setup.sh -zstgo -n "Your Name" -e "your.name@example.com" -c "code"
 ```
+
+### Available flags:
+- `-z`: Configure zsh
+- `-s`: Configure starship
+- `-t`: Configure tmux
+- `-g`: Configure git (requires `-n`, `-e`, `-p` options)
+- `-o`: Configure OpenCode (symlinks agent, command, skill, tool dirs and AGENTS.md)
 
 ### Benefits of the symlink approach:
 - Changes made in the repository are immediately available after sourcing
 - Single source of truth for configuration files
 - `.zshrc-local` file allows machine-specific configurations that won't be shared
+- OpenCode config backups stored in `~/.config/opencode/.backup/` with timestamps
 
 ## Legacy install script
 

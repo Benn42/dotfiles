@@ -47,9 +47,73 @@ create_local_config() {
     fi
 }
 
+# Function to backup files/directories to OpenCode backup folder with timestamp
+backup_to_opencode_backup() {
+    local target_path=$1
+    local backup_dir="$HOME/.config/opencode/.backup"
+    
+    # Skip if target is already a symlink (no backup needed)
+    if [ -L "$target_path" ]; then
+        return 0
+    fi
+    
+    # Skip if target doesn't exist
+    if [ ! -e "$target_path" ]; then
+        return 0
+    fi
+    
+    # Create backup directory if it doesn't exist
+    mkdir -p "$backup_dir"
+    
+    # Generate timestamp
+    local timestamp=$(date +%Y-%m-%d_%H-%M-%S)
+    local item_name=$(basename "$target_path")
+    local backup_path="$backup_dir/${item_name}.${timestamp}"
+    
+    # Move to backup
+    echo "Backing up existing $target_path to $backup_path"
+    mv "$target_path" "$backup_path"
+}
+
+# Function to create symlinks for OpenCode configuration
+create_opencode_symlink() {
+    local source_item=$1
+    local target_path=$2
+    
+    # Validate source exists
+    if [ ! -e "$(pwd)/$source_item" ]; then
+        echo "Error: Source $source_item not found in repository"
+        exit 1
+    fi
+    
+    # Check if target is already correctly symlinked
+    if [ -L "$target_path" ]; then
+        local current_target=$(readlink "$target_path")
+        local expected_target="$(pwd)/$source_item"
+        if [ "$current_target" = "$expected_target" ]; then
+            echo "Symlink already correct: $target_path -> $expected_target"
+            return 0
+        else
+            # Remove incorrect symlink
+            echo "Removing incorrect symlink: $target_path -> $current_target"
+            rm "$target_path"
+        fi
+    fi
+    
+    # Backup existing item if needed (only backs up non-symlinks)
+    backup_to_opencode_backup "$target_path"
+    
+    # Create parent directory if needed
+    mkdir -p "$(dirname "$target_path")"
+    
+    # Create absolute path symlink
+    ln -s "$(pwd)/$source_item" "$target_path"
+    echo "Created symlink: $target_path -> $(pwd)/$source_item"
+}
+
 usage() {
     cat << EOL
-Usage: $0 [-g -e your.name@example.com -n \"Your name\" -p path/to/.ssh/your.pub [-c youreditor]] [-t] [-s] [-z]
+Usage: $0 [-g -e your.name@example.com -n \"Your name\" -p path/to/.ssh/your.pub [-c youreditor]] [-t] [-s] [-z] [-o]
 -g Flags to configure .gitconfig
     -e Github Email global config
     -n Github Name global config
@@ -58,10 +122,11 @@ Usage: $0 [-g -e your.name@example.com -n \"Your name\" -p path/to/.ssh/your.pub
 -t Flags to configure tmux
 -s Flags to configure starship
 -z Flags to configure zsh
+-o Flags to configure opencode
 EOL
 }
 
-while getopts ":gtsze:n:p:c:h" o; do
+while getopts ":gtsoe:n:p:c:h" o; do
     case "${o}" in
         g)
             git=true
@@ -74,6 +139,9 @@ while getopts ":gtsze:n:p:c:h" o; do
             ;;
         z)
             zsh=true
+            ;;
+        o)
+            opencode=true
             ;;
         e)
             email=${OPTARG}
@@ -206,6 +274,24 @@ if [ $zsh ]; then
     else
         echo "$HOME/.zshrc file not found. Unable to source."
     fi
+fi
+
+if [ $opencode ]; then
+    echo "Installing OpenCode config..."
+    
+    # Ensure OpenCode config directory exists
+    mkdir -p "$HOME/.config/opencode"
+    
+    # Symlink AGENTS.md file
+    create_opencode_symlink "./opencode/AGENTS.md" "$HOME/.config/opencode/AGENTS.md"
+    
+    # Symlink subdirectories
+    create_opencode_symlink "./opencode/agent" "$HOME/.config/opencode/agent"
+    create_opencode_symlink "./opencode/command" "$HOME/.config/opencode/command"
+    create_opencode_symlink "./opencode/skill" "$HOME/.config/opencode/skill"
+    create_opencode_symlink "./opencode/tool" "$HOME/.config/opencode/tool"
+    
+    echo "OpenCode config installation complete."
 fi
 
 echo "Script execution completed."
