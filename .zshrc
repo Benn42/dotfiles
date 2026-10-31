@@ -74,3 +74,14 @@ eval "$(starship init zsh)"
 if [ -f ~/.zshrc-local ]; then
     source ~/.zshrc-local
 fi
+
+# bun completions
+[ -s "/home/ben/.bun/_bun" ] && source "/home/ben/.bun/_bun"
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+
+#gitbutler
+export PATH="$HOME/.local/bin:$PATH"
+eval "$(but completions zsh)"
